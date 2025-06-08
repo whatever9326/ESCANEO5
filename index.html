@@ -89,18 +89,14 @@
     <div id="historial"></div>
   </div>
 
-  <audio id="sonido-ok" preload="auto">
-    <source src="ok.mp3" type="audio/mpeg">
-  </audio>
-  <audio id="sonido-error" preload="auto">
-    <source src="error.mp3" type="audio/mpeg">
-  </audio>
-
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script>
+// Variables
 let pedidos = {};
 let pedidoActual = null;
 let historial = [];
+const sonidoOk = new Audio("ok.mp3");
+const sonidoError = new Audio("error.mp3");
 
 function cargarDesdeSheet() {
   const url = document.getElementById("sheetUrl").value;
@@ -157,7 +153,7 @@ function mostrarPedido() {
   if (!pedidoActual) return;
 
   const thead = document.createElement("thead");
-  thead.innerHTML = "<tr><th>Código</th><th>Descripción</th><th>Requerido</th><th>Escaneado</th></tr>";
+  thead.innerHTML = `<tr><th>Código</th><th>Descripción</th><th>Requerido</th><th>Escaneado</th></tr>`;
   tabla.appendChild(thead);
 
   const tbody = document.createElement("tbody");
@@ -181,11 +177,13 @@ document.getElementById("barcodeInput").addEventListener("keypress", function (e
     if (producto) {
       const cantidad = parseInt(document.getElementById("multiplicador").value) || 1;
       producto.escaneados += cantidad;
-      const okAudio = document.getElementById("sonido-ok");
-      okAudio.pause(); okAudio.currentTime = 0; okAudio.play();
+      sonidoOk.pause();
+      sonidoOk.currentTime = 0;
+      sonidoOk.play().catch(e => console.warn("No se pudo reproducir ok.mp3:", e));
     } else {
-      const errorAudio = document.getElementById("sonido-error");
-      errorAudio.pause(); errorAudio.currentTime = 0; errorAudio.play();
+      sonidoError.pause();
+      sonidoError.currentTime = 0;
+      sonidoError.play().catch(e => console.warn("No se pudo reproducir error.mp3:", e));
       mostrarMensaje("Código no encontrado");
     }
     mostrarPedido();
@@ -196,6 +194,7 @@ function exportarResumen() {
   if (!pedidoActual) return;
   const filas = pedidoActual.map(p => [p.codigo, p.descripcion, p.cantidad, p.escaneados]);
   const csv = ["CODIGO,DESCRIPCION,CANTIDAD,ESCANEADOS"].concat(filas.map(f => f.join(","))).join("\n");
+
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
